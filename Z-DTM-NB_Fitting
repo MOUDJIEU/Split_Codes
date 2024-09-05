@@ -19,9 +19,13 @@ library(dispRity)
 library(str2str)
 
 
+
+### ### ### Data
 ### DataCount : the matrix of count data
 ### DataVar : the matrix of explanatory variables (x1, x2, x3)
 ### Tr : the phylogenetic tree.
+
+
 
 ### ### ### Node data split
 Node_data_split = function(Tr,DataCount,DataVar)
@@ -97,14 +101,13 @@ res_zi <- list(res_node,best_model)
 names(res_zi) <- c("nodeRes","bestModel")
 
 
-### ### ### The global abundance
 
+### ### ### The global abundance
 ### Sum data
 df_reg <- Node_data_split(Tr=Tree,DataCount = dataObs, DataVar = dataVar)
-df_2 <- df_reg[[181]][,1:2]
+df_2 <- df_reg[[181]][,1:2] # 181 is the root node
 Y_global <- apply(df_2,1,sum)
 df_sum <- cbind(Y_global,df_reg[[181]][,3:6]) 
-
 
 ### Sum fitting by NBI 
 res_sum_nbi <- try(gamlss(formula = Y_global ~ x1+x2+x3+offset(log(offsets)),family=NBI, data=df_sum))
