@@ -82,7 +82,7 @@ res_dtm_nb <- res_node
 
 ### Sum data
 df_reg <- Node_data_split(Tr=Tree,DataCount = dataObs, DataVar = dataVar)
-df_2 <- df_reg[[181]][,1:2]
+df_2 <- df_reg[[181]][,1:2] # 181 is the root node
 Y_global <- apply(df_2,1,sum)
 df_sum <- cbind(Y_global,df_reg[[181]][,3:6]) 
 
