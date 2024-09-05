@@ -1,0 +1,10 @@
+library(MGLM)
+
+### df_count: matrix of count data
+### df_var: matrix of explonatory variables
+
+
+### Fitting DM model with MGLM
+res_dm <- MGLMreg(df_count ~ VarX,dist="DM")
+
+### Fitting 
