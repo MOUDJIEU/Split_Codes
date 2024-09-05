@@ -97,12 +97,18 @@ res_zi <- list(res_node,best_model)
 names(res_zi) <- c("nodeRes","bestModel")
 
 
+### ### ### The global abundance
+
+### Sum data
+df_reg <- Node_data_split(Tr=Tree,DataCount = dataObs, DataVar = dataVar)
+df_2 <- df_reg[[181]][,1:2]
+Y_global <- apply(df_2,1,sum)
+df_sum <- cbind(Y_global,df_reg[[181]][,3:6]) 
 
 
-
-
-
-
+### Sum fitting by NBI 
+res_sum_bnb <- try(gamlss(formula = Y_global ~ x1+x2+x3+offset(log(offsets)), sigma.formula= Y_global ~ x1+x2+x3, nu.formula= Y_global ~ x1+x2+x3,family=BNB(), data=df_sum))
+save(res_sum,file="res_sum_base_bnb_190324.RData")
 
 
 
