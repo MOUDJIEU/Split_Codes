@@ -1,1 +1,111 @@
+### ### ### Libraries
+library(data.table)
+library(sf)
+library(terra)
+library(ggplot2)
+library(ape)
+library(picante)
+library(phylobase)
+library(data.table)
+library(gamlss)
+library(gamlss.lasso)
+library(pacman)
+library(FactoMineR)
+library(raster)
+library(data.table)
+library(spatial)
+library(RRphylo)
+library(dispRity)
+library(str2str)
 
+
+### DataCount : the matrix of count data
+### DataVar : the matrix of explanatory variables (x1, x2, x3)
+### Tr : the phylogenetic tree.
+
+### ### ### Node data split
+Node_data_split = function(Tr,DataCount,DataVar)
+{
+  ### Nodes names and tree transformation
+  a <- dim(DataCount)[2]
+  nodeIndex <- (a+1):(2*a-1)
+  nodeData <- list()
+  Tree2 <- as(Tree,"phylo4d")
+  
+  ### Iterations
+  for(i in nodeIndex)
+  {
+    childNode <- as.numeric(children(Tree2,i))
+    leftTips <- as.numeric(descendants(Tree2,childNode[1]))
+    rightTips <- as.numeric(descendants(Tree2,childNode[2]))
+    if(length(leftTips)==1)
+    {
+      Y_left <- as.numeric(DataCount[,leftTips])
+    }else{
+      Y_left <- as.numeric(apply(DataCount[,leftTips],1,sum))
+    }
+    if(length(rightTips)==1)
+    {
+      Y_right <- as.numeric(DataCount[,rightTips])
+    }else{
+      Y_right <- as.numeric(apply(DataCount[,rightTips],1,sum))
+    }
+    XX <- data.frame(Y_left,Y_right)
+    nodeData[[i]] <- as.data.frame(cbind(XX,DataVar))
+  }
+  
+  ### results
+  return(nodeData)
+}
+
+
+
+### ### ### Fitting at each internal node
+df_reg <- Node_data_split(Tr=Tree,DataCount = dataObs, DataVar = dataVar)
+res_node <- list()
+best_model <- c()
+a <- length(Tree$tip.label)
+chem <- (a+1):(2*a-1)
+for(k in 181:359)
+{
+  dataTest <- df_reg[[k]]
+  resk <- list()
+  
+  ### Bivariate Dirichlet Multinomial regression
+  resk[[1]] <- try(gamlss(formula = cbind(Y_left,Y_right)~x1+x2+x3, family=BB, data=dataTest, control = gamlss.control(n.cyc = 30)))
+  
+  ### Left zero inflated bivariate Dirichlet Multinomial regression
+  resk[[2]] <- try(gamlss(formula = cbind(Y_left,Y_right)~x1+x2+x3, nu.formula = cbind(Y_left,Y_right)~x1+x2+x3, family=ZIBB, data=dataTest, control = gamlss.control(n.cyc = 30)))
+  
+  ### Right zero inflated bivariate Dirichlet Multinomial regression
+  resk[[3]] <- try(gamlss(formula = cbind(Y_right,Y_left)~x1+x2+x3, nu.formula = cbind(Y_right,Y_left)~x1+x2+x3, family=ZIBB, data=dataTest, control = gamlss.control(n.cyc = 30)))
+  
+  ### Select the best model
+    bi <- lapply(resk,function(x){
+      if(sum(class(x)=="try-error")!=0)
+      {
+        return(NA)
+      }else{return(AIC(x))}
+    })
+    
+  ### node results
+  best_model[k] <- which.min(bi)
+  res_node[[k]] <- resk[[which.min(bi)]]
+  print(k)
+}
+res_zi <- list(res_node,best_model)
+names(res_zi) <- c("nodeRes","bestModel")
+
+
+### ### ### The global abundance
+
+### Sum data
+df_reg <- Node_data_split(Tr=Tree,DataCount = dataObs, DataVar = dataVar)
+df_2 <- df_reg[[181]][,1:2]
+Y_global <- apply(df_2,1,sum)
+df_sum <- cbind(Y_global,df_reg[[181]][,3:6]) 
+
+
+### Sum fitting by NBI 
+res_sum_bnb <- try(gamlss(formula = Y_global ~ x1+x2+x3+offset(log(offsets)), sigma.formula= Y_global ~ x1+x2+x3, nu.formula= Y_global ~ x1+x2+x3,family=BNB(), data=df_sum))
+save(res_sum,file="res_sum_base_bnb_190324.RData")
