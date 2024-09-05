@@ -24,13 +24,50 @@ library(MGLM)
 ### ### ### Data
 ### DataCount : the matrix of count data
 ### DataVar : the matrix of explanatory variables (x1, x2, x3)
+### Tr : the phylogenetic tree.
 
+
+
+### ### ### Node data split
+Node_data_split = function(Tr,DataCount,DataVar)
+{
+  ### Nodes names and tree transformation
+  a <- dim(DataCount)[2]
+  nodeIndex <- (a+1):(2*a-1)
+  nodeData <- list()
+  Tree2 <- as(Tree,"phylo4d")
+  
+  ### Iterations
+  for(i in nodeIndex)
+  {
+    childNode <- as.numeric(children(Tree2,i))
+    leftTips <- as.numeric(descendants(Tree2,childNode[1]))
+    rightTips <- as.numeric(descendants(Tree2,childNode[2]))
+    if(length(leftTips)==1)
+    {
+      Y_left <- as.numeric(DataCount[,leftTips])
+    }else{
+      Y_left <- as.numeric(apply(DataCount[,leftTips],1,sum))
+    }
+    if(length(rightTips)==1)
+    {
+      Y_right <- as.numeric(DataCount[,rightTips])
+    }else{
+      Y_right <- as.numeric(apply(DataCount[,rightTips],1,sum))
+    }
+    XX <- data.frame(Y_left,Y_right)
+    nodeData[[i]] <- as.data.frame(cbind(XX,DataVar))
+  }
+  
+  ### results
+  return(nodeData)
+}
 
 
 ### ### ### The global abundance
 ### Sum data
 df_reg <- Node_data_split(Tr=Tree,DataCount = dataObs, DataVar = dataVar)
-df_2 <- df_reg[[181]][,1:2]
+df_2 <- df_reg[[181]][,1:2] # 181 is the root node
 Y_global <- apply(df_2,1,sum)
 df_sum <- cbind(Y_global,df_reg[[181]][,3:6]) 
 
