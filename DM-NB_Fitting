@@ -1,10 +1,44 @@
+### ### ### Libraries
+library(data.table)
+library(sf)
+library(terra)
+library(ggplot2)
+library(ape)
+library(picante)
+library(phylobase)
+library(data.table)
+library(gamlss)
+library(gamlss.lasso)
+library(pacman)
+library(FactoMineR)
+library(raster)
+library(data.table)
+library(spatial)
+library(RRphylo)
+library(dispRity)
+library(str2str)
 library(MGLM)
 
-### df_count: matrix of count data
-### df_var: matrix of explonatory variables
 
 
-### Fitting DM model with MGLM
-res_dm <- MGLMreg(df_count ~ VarX,dist="DM")
+### ### ### Data
+### DataCount : the matrix of count data
+### DataVar : the matrix of explanatory variables (x1, x2, x3)
 
-### Fitting 
+
+
+### ### ### The global abundance
+### Sum data
+df_reg <- Node_data_split(Tr=Tree,DataCount = dataObs, DataVar = dataVar)
+df_2 <- df_reg[[181]][,1:2]
+Y_global <- apply(df_2,1,sum)
+df_sum <- cbind(Y_global,df_reg[[181]][,3:6]) 
+
+### Sum fitting by NBI 
+res_sum_nb <- try(gamlss(formula = Y_global ~ x1+x2+x3+offset(log(offsets)),family=NBI, data=df_sum))
+
+
+
+### ### ### Multivariate fitting by MGLM
+res_dm <- MGLMreg(DataCount ~ DataVar,dist="DM")
+
