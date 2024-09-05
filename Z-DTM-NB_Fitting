@@ -107,5 +107,5 @@ df_sum <- cbind(Y_global,df_reg[[181]][,3:6])
 
 
 ### Sum fitting by NBI 
-res_sum_bnb <- try(gamlss(formula = Y_global ~ x1+x2+x3+offset(log(offsets)), sigma.formula= Y_global ~ x1+x2+x3, nu.formula= Y_global ~ x1+x2+x3,family=BNB(), data=df_sum))
-save(res_sum,file="res_sum_base_bnb_190324.RData")
+res_sum_nbi <- try(gamlss(formula = Y_global ~ x1+x2+x3+offset(log(offsets)),family=NBI, data=df_sum))
+
