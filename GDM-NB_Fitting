@@ -74,3 +74,7 @@ df_sum <- cbind(Y_global,df_reg[[181]][,3:6])
 ### Sum fitting by NBI 
 res_sum_nb <- try(gamlss(formula = Y_global ~ x1+x2+x3+offset(log(offsets)),family=NBI, data=df_sum))
 
+
+
+### ### ### Multivariate fitting by MGLM
+res_gdm <- MGLMreg(DataCount ~ DataVar,dist="GDM")
